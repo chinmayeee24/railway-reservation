@@ -1,0 +1,493 @@
+#bookingform.js
+import React, { useState } from 'react';
+import axios from 'axios';
+
+export default function BookingForm() {
+  const [formData, setFormData] = useState({
+    passenger_name: '',
+    train_id: '',
+    seat_no: ''
+  });
+
+  const handleChange = e => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    axios.post('http://localhost:5000/book', formData)
+      .then(res => alert(res.data.message))
+      .catch(err => console.log(err));
+  };
+
+  return (
+    <div>
+      <h2>🎫 Book Your Ticket</h2>
+      <form onSubmit={handleSubmit}>
+        <label>Passenger Name: </label>
+        <input type="text" name="passenger_name" onChange={handleChange} /><br /><br />
+
+        <label>Train ID: </label>
+        <input type="number" name="train_id" onChange={handleChange} /><br /><br />
+
+        <label>Seat No: </label>
+        <input type="number" name="seat_no" onChange={handleChange} /><br /><br />
+
+        <button type="submit">Book Ticket</button>
+      </form>
+    </div>
+  );
+}
+#login.js
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = "http://localhost:5000"; // change if needed
+
+export default function Login({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const res = await fetch(`${BASE_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      onLogin(data.user);
+      navigate("/");
+    } else {
+      alert("Incorrect email or password!");
+    }
+  };
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>Login</h2>
+
+        <form onSubmit={handleLogin}>
+          <input
+            type="email"
+            placeholder="Enter Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={styles.input}
+          />
+
+          <input
+            type="password"
+            placeholder="Enter Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={styles.input}
+          />
+
+          <button type="submit" style={styles.button}>
+            Login
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  page: {
+    height: "100vh",
+    width: "100vw",
+    background: "linear-gradient(135deg, #6dd5fa, #2980b9)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontFamily: "Arial, sans-serif",
+  },
+  card: {
+    background: "white",
+    padding: "40px 50px",
+    borderRadius: "15px",
+    width: "350px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+    textAlign: "center",
+  },
+  title: {
+    marginBottom: "25px",
+    fontSize: "28px",
+    fontWeight: "600",
+    color: "#333",
+  },
+  input: {
+    width: "100%",
+    padding: "12px",
+    marginBottom: "15px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    fontSize: "16px",
+  },
+  button: {
+    width: "100%",
+    padding: "12px",
+    background: "#2980b9",
+    color: "white",
+    fontSize: "18px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    marginTop: "10px",
+    transition: "0.3s",
+  },
+};
+#MyBookings.js
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = "http://localhost:5000"; // change if needed
+
+export default function MyBookings({ user }) {
+  const [bookings, setBookings] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${BASE_URL}/bookings/${user.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setBookings(data.bookings);
+      });
+  }, [user]);
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h2 style={styles.title}>My Bookings</h2>
+
+        <button style={styles.backBtn} onClick={() => navigate("/")}>
+          Back to Trains
+        </button>
+
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>Train</th>
+              <th>Passenger</th>
+              <th>Seats</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bookings.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={styles.noData}>No bookings found</td>
+              </tr>
+            ) : (
+              bookings.map((b) => (
+                <tr key={b.id}>
+                  <td>{b.id}</td>
+                  <td>{b.train_name}</td>
+                  <td>{b.passenger_name}</td>
+                  <td>{b.seats}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  page: {
+    height: "100vh",
+    background: "linear-gradient(135deg, #6dd5fa, #2980b9)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "30px",
+    fontFamily: "Arial, sans-serif"
+  },
+  container: {
+    background: "white",
+    padding: "30px",
+    borderRadius: "15px",
+    width: "80%",
+    maxWidth: "900px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+  },
+  title: {
+    textAlign: "center",
+    marginBottom: "20px",
+    fontSize: "28px",
+    fontWeight: "600",
+  },
+  backBtn: {
+    background: "#2980b9",
+    color: "white",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    marginBottom: "15px",
+    fontSize: "16px",
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    textAlign: "center",
+  },
+  noData: {
+    padding: "15px",
+    fontStyle: "italic",
+  },
+};
+#TrainList.css
+body {
+  background-color: #b1cbda;
+  background: linear-gradient(90deg, #6dd5ed, #2193b0, #ad82ff);
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Smooth animated gradient */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Container glass card */
+.container {
+  width: 85%;
+  max-width: 900px;
+  margin: 50px auto;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(18px);
+  padding: 25px;
+  border-radius: 18px;
+  box-shadow: 0px 0px 20px rgba(0,0,0,0.25);
+  text-align: center;
+}
+
+/* Heading styles */
+h1, h2 {
+  margin: 0 0 20px;
+  font-weight: bold;
+  color: #2c2c2c;
+}
+
+/* TABLE */
+.train-table {
+  margin: 0 auto;
+  border-collapse: collapse;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.train-table th {
+  background: linear-gradient(90deg, #007bff, #0056d6);
+  color: white;
+  padding: 14px;
+  font-size: 15px;
+}
+
+.train-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.train-table tr:hover {
+  background-color: #eef6ff;
+  transition: 0.3s ease-in-out;
+}
+button {
+  margin: 3px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:nth-child(1) { background: #dcf8fc; color: rgb(8, 8, 8); }  /* Book */
+button:nth-child(2) { background: #dbf8fe; color: black; } /* Update */
+button:nth-child(3) { background: #c7f4fb; color: rgb(7, 7, 7); } /* Delete */
+
+button:hover {
+  opacity: 0.85;
+}
+#TrainList.js
+import React, { useEffect, useState } from "react";
+import "./TrainList.css";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = "http://localhost:5000"; // change to 8081 if that's your backend
+
+export default function TrainList({ user }) {
+  const [trains, setTrains] = useState([]);
+  const navigate = useNavigate();
+
+  const fetchTrains = () => {
+    fetch(`${BASE_URL}/trains`)
+      .then(res => res.json())
+      .then(data => setTrains(data))
+      .catch(err => console.error("Error fetching trains:", err));
+  };
+
+  useEffect(() => {
+    fetchTrains();
+  }, []);
+
+  // Book -> prompt for passenger & seats, send user_id
+  const handleBook = async (train) => {
+    if (!user) { alert("Please login"); return; }
+
+    const passenger_name = prompt("Enter passenger name:");
+    if (!passenger_name) return;
+
+    const seatsStr = prompt("Enter number of seats to book:");
+    if (!seatsStr) return;
+    const seats = parseInt(seatsStr, 10);
+    if (!Number.isInteger(seats) || seats <= 0) { alert("Invalid seat count"); return; }
+    if (seats > train.available_seats) { alert("Not enough seats available"); return; }
+
+    try {
+      const res = await fetch(`${BASE_URL}/book`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: user.id,
+          train_id: train.train_id,
+          passenger_name,
+          seats
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Booked successfully");
+        fetchTrains(); // refresh trains to update available seats
+      } else {
+        alert(data.error || "Booking failed");
+      }
+    } catch (err) {
+      alert("Booking error: " + err.message);
+    }
+  };
+
+  // Update booking: prompt booking id (or you can list ID in MyBookings). We'll prompt booking id and new seats.
+  const handleUpdate = async (train) => {
+    const bookingIdStr = prompt("Enter booking id to update (see My Bookings):");
+    if (!bookingIdStr) return;
+    const booking_id = parseInt(bookingIdStr, 10);
+    if (!booking_id) return;
+
+    const newSeatsStr = prompt("Enter new number of seats:");
+    if (!newSeatsStr) return;
+    const newSeats = parseInt(newSeatsStr, 10);
+    if (!Number.isInteger(newSeats) || newSeats <= 0) { alert("Invalid seats"); return; }
+
+    try {
+      const res = await fetch(`${BASE_URL}/update-booking`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_id, newSeats })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Booking updated");
+        fetchTrains();
+      } else {
+        alert(data.error || "Update failed");
+      }
+    } catch (err) {
+      alert("Update error: " + err.message);
+    }
+  };
+
+  // Cancel booking
+  const handleCancel = async () => {
+    const bookingIdStr = prompt("Enter booking id to cancel (see My Bookings):");
+    if (!bookingIdStr) return;
+    const booking_id = parseInt(bookingIdStr, 10);
+    if (!booking_id) return;
+
+    if (!window.confirm("Are you sure you want to cancel booking #" + booking_id + "?")) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/cancel-booking`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Booking cancelled");
+        fetchTrains();
+      } else {
+        alert(data.error || "Cancel failed");
+      }
+    } catch (err) {
+      alert("Cancel error: " + err.message);
+    }
+  };
+
+  return (
+    <div className="container">
+      <h1>Railway Reservation System</h1>
+      <h2>Available Trains</h2>
+
+      <table className="train-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Train Name</th>
+            <th>Source</th>
+            <th>Destination</th>
+            <th>Departure</th>
+            <th>Arrival</th>
+            <th>Total Seats</th>
+            <th>Available Seats</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trains.map((t) => (
+            <tr key={t.train_id}>
+              <td>{t.train_id}</td>
+              <td>{t.train_name}</td>
+              <td>{t.source}</td>
+              <td>{t.destination}</td>
+              <td>{t.departure_time}</td>
+              <td>{t.arrival_time}</td>
+              <td>{t.total_seats}</td>
+              <td>{t.available_seats}</td>
+              <td>
+                <button onClick={() => handleBook(t)}>Book</button>
+                <button onClick={() => navigate("/bookings")}>View My Bookings</button>
+                <div style={{ marginTop: 6 }}>
+                  <button onClick={() => handleUpdate(t)}>Update booking</button>
+                  <button onClick={() => handleCancel()}>Cancel booking</button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
