@@ -1,0 +1,28 @@
+#App.js
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import TrainList from "./components/TrainList";
+import MyBookings from "./components/MyBookings";
+import Login from "./components/login";
+
+function App() {
+  const [user, setUser] = useState(null); // logged in user object
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login onLogin={setUser} />} />
+        <Route
+          path="/"
+          element={user ? <TrainList user={user} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/bookings"
+          element={user ? <MyBookings user={user} /> : <Navigate to="/login" />}
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
